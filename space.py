@@ -40,8 +40,8 @@ esplosione_imgs = [
 ]
 
 # ─── Suoni ───────────────────────────────────────────────────────────────────
-suono_atterraggio = pygame.mixer.Sound('atterraggio.mp3')
-suono_esplosione  = pygame.mixer.Sound('esplosione.mp3')
+suono_atterraggio = pygame.mixer.Sound('atterraggio.wav')
+suono_esplosione  = pygame.mixer.Sound('esplosione.wav')
 pygame.mixer.music.load('musica.mp3')
 pygame.mixer.music.set_volume(0.4)
 pygame.mixer.music.play(-1)
@@ -247,7 +247,7 @@ while True:
     if atterrata:
         mostra_testo_centrato("Successful landing!", 300, VERDE)
         mostra_testo_centrato(f"Score: {punteggio}", 350, VERDE)
-        mostra_testo_centrato("▶ Press ENTER to proceed to the next level", 420, VERDE)
+        mostra_testo_centrato("Press ENTER to proceed to the next level", 420, VERDE)
 
     elif esplosa:
         mostra_testo_centrato("The ship exploded!", 300, ROSSO)
