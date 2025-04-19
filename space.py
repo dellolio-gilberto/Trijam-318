@@ -18,7 +18,7 @@ NERO       = (  0,   0,   0)
 ROSSO      = (255,   0,   0)
 VERDE      = (  0, 255,   0)
 GRIGIO     = (150, 150, 150)
-font       = pygame.font.SysFont("8-bit", 28)
+font       = pygame.font.SysFont("couriernew", 28)
 
 # ─── Caricamento immagini ────────────────────────────────────────────────────
 sfondo_img     = pygame.transform.scale(pygame.image.load('sfondo2.png').convert(), (LARGHEZZA, ALTEZZA))
@@ -60,19 +60,19 @@ vite_massime    = 3
 landing_offset  = 220
 
 # ─── Stato dinamico ──────────────────────────────────────────────────────────
-carburante     = carburante_max
-altezza        = 100
-velocità       = 0
-gravità        = gravità_base
-in_discesa     = False
-atterrata      = False
-esplosa        = False
-pronto_next    = False
-tempo_inizio   = 0
-tempo_fine     = 0
-punteggio      = 0
-vite_rimaste   = vite_massime
-game_over      = False
+carburante       = carburante_max
+altezza          = 100
+velocità         = 0
+gravità          = gravità_base
+in_discesa       = False
+atterrata        = False
+esplosa          = False
+pronto_next      = False
+tempo_inizio     = 0
+tempo_fine       = 0
+punteggio        = 0
+vite_rimaste     = vite_massime
+game_over        = False
 esplosione_frame = 0
 esplosione_timer = 0
 
@@ -95,16 +95,16 @@ def start_level():
     global in_discesa, atterrata, esplosa, pronto_next
     global tempo_inizio, game_over, esplosione_frame, esplosione_timer
 
-    carburante   = max(0, carburante_max - (1 * livello))
-    altezza      = 100
-    velocità     = 0
-    gravità      = max(0.00, gravità_base - (livello - 1) * 0.02)
-    in_discesa   = False
-    atterrata    = False
-    esplosa      = False
-    pronto_next  = False
-    tempo_inizio = 0
-    game_over    = False
+    carburante       = max(0, carburante_max - (1 * livello))
+    altezza          = 100
+    velocità         = 0
+    gravità          = max(0.00, gravità_base - (livello - 1) * 0.02)
+    in_discesa       = False
+    atterrata        = False
+    esplosa          = False
+    pronto_next      = False
+    tempo_inizio     = 0
+    game_over        = False
     esplosione_frame = 0
     esplosione_timer = 0
 
@@ -143,6 +143,7 @@ while True:
                 suono_atterraggio.play()
                 pronto_next = True
 
+    # ─── Fisica ───────────────────────────────────────────────────────────────
     if in_discesa and not (atterrata or esplosa):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE] and carburante > 0:
@@ -175,6 +176,7 @@ while True:
                 if vite_rimaste <= 0:
                     game_over = True
 
+    # aggiorna sprite navicella
     if vite_rimaste > 0:
         navicella_img = navicelle[vite_rimaste - 1]
 
@@ -186,27 +188,29 @@ while True:
     nx = LARGHEZZA // 2 - navicella_img.get_width() // 2
     ny = int(altezza)
 
-    if not esplosa or esplosione_frame >= len(esplosione_imgs):
+    # disegna navicella solo se non esplosa
+    if not esplosa:
         finestra.blit(navicella_img, (nx, ny))
 
+    # disegna fuoco
     if in_discesa and pygame.key.get_pressed()[pygame.K_SPACE] and carburante > 0 and not (atterrata or esplosa):
         fx = LARGHEZZA // 2 - fuoco_img.get_width() // 2
         fy = ny + navicella_img.get_height() - 20
         finestra.blit(fuoco_img, (fx, fy))
 
-    # Animazione esplosione
+    # Animazione esplosione (più rapida)
     if esplosa and esplosione_frame < len(esplosione_imgs):
         esplosione_timer += 1
-        if esplosione_timer % 15 == 0:
+        # velocizza animazione: cambia frame ogni 8 tick
+        if esplosione_timer % 8 == 0:
             esplosione_frame += 1
-
         if esplosione_frame < len(esplosione_imgs):
             img = esplosione_imgs[esplosione_frame]
             ex = LARGHEZZA // 2 - img.get_width() // 2
             ey = int(altezza + navicella_img.get_height() // 2 - img.get_height() // 2)
             finestra.blit(img, (ex, ey))
 
-    # HUD
+    # ─── HUD Improved (EN) ────────────────────────────────────────────────────────
     hud_x = 20
     hud_y = 20
     hud_w = 320
@@ -240,12 +244,14 @@ while True:
         fuel_surface = font.render(f"Fuel: {fuel_percent}%", True, BIANCO)
         finestra.blit(fuel_surface, (barra_x + barra_larghezza + 15, barra_y - 4))
 
+    # ─── Game State Messages (EN) ─────────────────────────────────────────────────
     if atterrata:
         mostra_testo_centrato("Successful landing!", 300, VERDE)
         mostra_testo_centrato(f"Score: {punteggio}", 350, VERDE)
-        mostra_testo_centrato("▶ Press ENTER to proceed to the next level", 420, VERDE)
+        mostra_testo_centrato("Press ENTER to proceed to the next level", 420, VERDE)
 
     elif esplosa:
+        # dopo l'animazione esplosione non mostrata navicella
         mostra_testo_centrato("The ship exploded!", 300, ROSSO)
         mostra_testo_centrato("Press R to retry this level", 350, ROSSO)
         if game_over:
@@ -257,4 +263,3 @@ while True:
 
     pygame.display.flip()
     clock.tick(FPS)
-
