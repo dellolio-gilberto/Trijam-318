@@ -198,10 +198,6 @@ while True:
         w = int(200 * (carburante / carburante_max))
         pygame.draw.rect(finestra, VERDE, (20, 160, w, 20), border_radius=5)
 
-    for i in range(vite_rimaste):
-        x = LARGHEZZA - (i + 1) * 80 - 20
-        finestra.blit(vita_img, (x, 20))
-
     if atterrata:
         mostra_testo_centrato(f"✅ Atterraggio! Punteggio: {punteggio}", 300, VERDE)
         mostra_testo_centrato("Premi INVIO per il livello successivo", 340, VERDE)
