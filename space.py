@@ -22,10 +22,16 @@ font       = pygame.font.SysFont("consolas", 28)
 
 # ─── Caricamento immagini ────────────────────────────────────────────────────
 sfondo_img     = pygame.transform.scale(pygame.image.load('sfondo2.png').convert(), (LARGHEZZA, ALTEZZA))
-navicella_img  = pygame.transform.scale(pygame.image.load('navicella.png').convert_alpha(), (276, 228))
 planet_img     = pygame.transform.scale(pygame.image.load('atterraggio2.png').convert_alpha(), (1980, 1080))
-fuoco_img      = pygame.transform.scale(pygame.image.load('fuoco.png').convert_alpha(), (72, 72))
+fuoco_img      = pygame.transform.scale(pygame.image.load('fuoco.png').convert_alpha(), (60, 48))
 vita_img       = pygame.transform.scale(pygame.image.load('vita.png').convert_alpha(), (72, 72))
+
+# Caricamento delle immagini per le navicelle (1 immagine per ogni vita)
+navicelle = [
+    pygame.transform.scale(pygame.image.load('navicella3.png').convert_alpha(), (276, 228)),
+    pygame.transform.scale(pygame.image.load('navicella2.png').convert_alpha(), (276, 228)),
+    pygame.transform.scale(pygame.image.load('navicella1.png').convert_alpha(), (276, 228))
+]
 
 # ─── Suoni ───────────────────────────────────────────────────────────────────
 suono_atterraggio = pygame.mixer.Sound('atterraggio.mp3')
@@ -161,6 +167,10 @@ while True:
                 suono_esplosione.play()
                 if vite_rimaste <= 0:
                     game_over = True
+
+    # Sostituzione della navicella in base alle vite rimanenti
+    if vite_rimaste > 0:
+        navicella_img = navicelle[vite_rimaste - 1]
 
     # ─── Disegno ──────────────────────────────────────────────────────────────
     finestra.blit(sfondo_img, (0, 0))
