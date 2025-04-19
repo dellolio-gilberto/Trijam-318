@@ -18,7 +18,7 @@ NERO       = (  0,   0,   0)
 ROSSO      = (255,   0,   0)
 VERDE      = (  0, 255,   0)
 GRIGIO     = (150, 150, 150)
-font       = pygame.font.SysFont("couriernew", 28)
+font       = pygame.font.Font("Minecraft.ttf", 22)
 
 # ─── Caricamento immagini ────────────────────────────────────────────────────
 sfondo_img     = pygame.transform.scale(pygame.image.load('sfondo2.png').convert(), (LARGHEZZA, ALTEZZA))
