@@ -10,7 +10,7 @@ pygame.mixer.init()
 LARGHEZZA = 1920
 ALTEZZA = 1080
 finestra = pygame.display.set_mode((LARGHEZZA, ALTEZZA))
-pygame.display.set_caption("Atterra la Navicella!")
+pygame.display.set_caption("Land the Rocket!")
 
 # ─── Colori e font ───────────────────────────────────────────────────────────
 BIANCO     = (255, 255, 255)
@@ -18,7 +18,7 @@ NERO       = (  0,   0,   0)
 ROSSO      = (255,   0,   0)
 VERDE      = (  0, 255,   0)
 GRIGIO     = (150, 150, 150)
-font       = pygame.font.SysFont("consolas", 28)
+font       = pygame.font.SysFont("8-bit", 28)
 
 # ─── Caricamento immagini ────────────────────────────────────────────────────
 sfondo_img     = pygame.transform.scale(pygame.image.load('sfondo2.png').convert(), (LARGHEZZA, ALTEZZA))
@@ -26,11 +26,17 @@ planet_img     = pygame.transform.scale(pygame.image.load('atterraggio2.png').co
 fuoco_img      = pygame.transform.scale(pygame.image.load('fuoco.png').convert_alpha(), (60, 48))
 vita_img       = pygame.transform.scale(pygame.image.load('vita.png').convert_alpha(), (72, 72))
 
-# Caricamento delle immagini per le navicelle (1 immagine per ogni vita)
+# Navicelle
 navicelle = [
     pygame.transform.scale(pygame.image.load('navicella3.png').convert_alpha(), (276, 228)),
     pygame.transform.scale(pygame.image.load('navicella2.png').convert_alpha(), (276, 228)),
     pygame.transform.scale(pygame.image.load('navicella1.png').convert_alpha(), (276, 228))
+]
+
+# Esplosione a 3 frame
+esplosione_imgs = [
+    pygame.transform.scale(pygame.image.load(f'esplosione{i}.png').convert_alpha(), (510, 360))
+    for i in range(1, 4)
 ]
 
 # ─── Suoni ───────────────────────────────────────────────────────────────────
@@ -51,7 +57,7 @@ gravità_base    = 0.3
 spinta          = -0.6
 vel_sicura      = 2.2
 vite_massime    = 3
-landing_offset  = 200 # Altezza sopra il bordo del pianeta per considerare l'atterraggio
+landing_offset  = 220
 
 # ─── Stato dinamico ──────────────────────────────────────────────────────────
 carburante     = carburante_max
@@ -67,6 +73,8 @@ tempo_fine     = 0
 punteggio      = 0
 vite_rimaste   = vite_massime
 game_over      = False
+esplosione_frame = 0
+esplosione_timer = 0
 
 # ─── Funzioni ────────────────────────────────────────────────────────────────
 def mostra_testo(t, x, y, c=BIANCO):
@@ -84,7 +92,8 @@ def calcola_punteggio(c_max, c_rim, t_dis):
 
 def start_level():
     global carburante, altezza, velocità, gravità
-    global in_discesa, atterrata, esplosa, pronto_next, tempo_inizio, game_over
+    global in_discesa, atterrata, esplosa, pronto_next
+    global tempo_inizio, game_over, esplosione_frame, esplosione_timer
 
     carburante   = max(0, carburante_max - (1 * livello))
     altezza      = 100
@@ -96,6 +105,8 @@ def start_level():
     pronto_next  = False
     tempo_inizio = 0
     game_over    = False
+    esplosione_frame = 0
+    esplosione_timer = 0
 
 start_level()
 
@@ -132,7 +143,6 @@ while True:
                 suono_atterraggio.play()
                 pronto_next = True
 
-    # ─── Fisica ───────────────────────────────────────────────────────────────
     if in_discesa and not (atterrata or esplosa):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE] and carburante > 0:
@@ -142,16 +152,13 @@ while True:
         velocità += gravità
         altezza += velocità
 
-        # Hitbox personalizzata con Rect
         nx = LARGHEZZA // 2 - navicella_img.get_width() // 2
         ny = int(altezza)
         nav_rect = pygame.Rect(nx + 10, ny + 10, navicella_img.get_width() - 20, navicella_img.get_height() - 20)
         planet_rect = planet_img.get_rect(midbottom=(LARGHEZZA // 2, ALTEZZA))
-        # Soglia di collisione variabile
         landing_line = planet_rect.bottom - landing_offset
 
         if nav_rect.bottom >= landing_line:
-            # Allineo navicella alla soglia di atterraggio
             altezza = landing_line - navicella_img.get_height()
             tempo_fine = time.time()
             if abs(velocità) <= vel_sicura:
@@ -168,47 +175,85 @@ while True:
                 if vite_rimaste <= 0:
                     game_over = True
 
-    # Sostituzione della navicella in base alle vite rimanenti
     if vite_rimaste > 0:
         navicella_img = navicelle[vite_rimaste - 1]
 
     # ─── Disegno ──────────────────────────────────────────────────────────────
     finestra.blit(sfondo_img, (0, 0))
-
     planet_rect = planet_img.get_rect(midbottom=(LARGHEZZA // 2, ALTEZZA))
     finestra.blit(planet_img, planet_rect)
 
     nx = LARGHEZZA // 2 - navicella_img.get_width() // 2
     ny = int(altezza)
-    finestra.blit(navicella_img, (nx, ny))
+
+    if not esplosa or esplosione_frame >= len(esplosione_imgs):
+        finestra.blit(navicella_img, (nx, ny))
 
     if in_discesa and pygame.key.get_pressed()[pygame.K_SPACE] and carburante > 0 and not (atterrata or esplosa):
         fx = LARGHEZZA // 2 - fuoco_img.get_width() // 2
-        fy = ny + navicella_img.get_height() - 8
+        fy = ny + navicella_img.get_height() - 20
         finestra.blit(fuoco_img, (fx, fy))
 
-    # HUD
-    mostra_testo(f"Livello: {livello}", 20, 20)
-    mostra_testo(f"Velocità: {velocità:.2f}", 20, 60)
-    mostra_testo(f"Carburante: {int(carburante)}", 20, 90)
-    mostra_testo(f"Gravità: {gravità:.2f}", 20, 120)
+    # Animazione esplosione
+    if esplosa and esplosione_frame < len(esplosione_imgs):
+        esplosione_timer += 1
+        if esplosione_timer % 15 == 0:
+            esplosione_frame += 1
 
-    pygame.draw.rect(finestra, GRIGIO, (20, 160, 200, 20), border_radius=5)
+        if esplosione_frame < len(esplosione_imgs):
+            img = esplosione_imgs[esplosione_frame]
+            ex = LARGHEZZA // 2 - img.get_width() // 2
+            ey = int(altezza + navicella_img.get_height() // 2 - img.get_height() // 2)
+            finestra.blit(img, (ex, ey))
+
+    # HUD
+    hud_x = 20
+    hud_y = 20
+    hud_w = 320
+    hud_h = 230
+
+    hud_surface = pygame.Surface((hud_w, hud_h), pygame.SRCALPHA)
+    hud_surface.fill((0, 0, 0, 160))
+    finestra.blit(hud_surface, (hud_x, hud_y))
+
+    linea = 0
+    spazio = 36
+    mostra_testo("STATUS PANEL", hud_x + 20, hud_y + linea); linea += spazio
+    mostra_testo(f"Level: {livello}", hud_x + 20, hud_y + linea); linea += spazio
+    mostra_testo(f"Speed: {velocità:.2f}", hud_x + 20, hud_y + linea); linea += spazio
+    mostra_testo(f"Fuel: {int(carburante)}", hud_x + 20, hud_y + linea); linea += spazio
+    mostra_testo(f"Gravity: {gravità:.2f}", hud_x + 20, hud_y + linea); linea += spazio
+    mostra_testo(f"Lives: {vite_rimaste}", hud_x + 20, hud_y + linea); linea += spazio
+
+    barra_larghezza = 280
+    barra_altezza = 20
+    barra_x = hud_x + 20
+    barra_y = hud_y + hud_h + 10
+
+    pygame.draw.rect(finestra, GRIGIO, (barra_x, barra_y, barra_larghezza, barra_altezza), border_radius=10)
+
     if carburante_max > 0:
-        w = int(200 * (carburante / carburante_max))
-        pygame.draw.rect(finestra, VERDE, (20, 160, w, 20), border_radius=5)
+        riempimento = int(barra_larghezza * (carburante / carburante_max))
+        pygame.draw.rect(finestra, VERDE, (barra_x, barra_y, riempimento, barra_altezza), border_radius=10)
+
+        fuel_percent = int((carburante / carburante_max) * 100)
+        fuel_surface = font.render(f"Fuel: {fuel_percent}%", True, BIANCO)
+        finestra.blit(fuel_surface, (barra_x + barra_larghezza + 15, barra_y - 4))
 
     if atterrata:
-        mostra_testo_centrato(f"✅ Atterraggio! Punteggio: {punteggio}", 300, VERDE)
-        mostra_testo_centrato("Premi INVIO per il livello successivo", 340, VERDE)
+        mostra_testo_centrato("Successful landing!", 300, VERDE)
+        mostra_testo_centrato(f"Score: {punteggio}", 350, VERDE)
+        mostra_testo_centrato("▶ Press ENTER to proceed to the next level", 420, VERDE)
+
     elif esplosa:
-        mostra_testo_centrato("💥 Hai esploso la navicella!", 300, ROSSO)
-        mostra_testo_centrato("Premi R per riprovare", 340, ROSSO)
+        mostra_testo_centrato("The ship exploded!", 300, ROSSO)
+        mostra_testo_centrato("Press R to retry this level", 350, ROSSO)
         if game_over:
-            mostra_testo_centrato("❌ GAME OVER", 400, ROSSO)
-            mostra_testo_centrato("Premi R per ricominciare", 440, ROSSO)
+            mostra_testo_centrato("GAME OVER", 420, ROSSO)
+            mostra_testo_centrato("Press R to restart the game", 470, ROSSO)
+
     elif not in_discesa:
-        mostra_testo_centrato("Premi SPAZIO per iniziare", ALTEZZA // 2, BIANCO)
+        mostra_testo_centrato("Press SPACE to start descent", ALTEZZA // 2, BIANCO)
 
     pygame.display.flip()
     clock.tick(FPS)
