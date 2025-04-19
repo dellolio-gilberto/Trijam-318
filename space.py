@@ -2,17 +2,17 @@ import pygame
 import sys
 import time
 
-# ─── Inizializzazione ───
+# ─── Inizializzazione ─────────────────────────────────────────────────────────
 pygame.init()
 pygame.mixer.init()
 
-# ─── Costanti finestra ───
+# ─── Costanti finestra ────────────────────────────────────────────────────────
 LARGHEZZA = 1920
 ALTEZZA = 1080
 finestra = pygame.display.set_mode((LARGHEZZA, ALTEZZA))
 pygame.display.set_caption("Atterra la Navicella!")
 
-# ─── Colori e font ───
+# ─── Colori e font ───────────────────────────────────────────────────────────
 BIANCO     = (255, 255, 255)
 NERO       = (  0,   0,   0)
 ROSSO      = (255,   0,   0)
@@ -20,33 +20,34 @@ VERDE      = (  0, 255,   0)
 GRIGIO     = (150, 150, 150)
 font       = pygame.font.SysFont("consolas", 28)
 
-# ─── Caricamento immagini ───
-sfondo_img     = pygame.transform.scale(pygame.image.load('sfondo.png').convert(), (LARGHEZZA, ALTEZZA))
-navicella_img  = pygame.transform.scale(pygame.image.load('navicella.png').convert_alpha(), (60, 60))
-planet_img     = pygame.transform.scale(pygame.image.load('atterraggio2.png').convert_alpha(), (400, 120))
-fuoco_img      = pygame.transform.scale(pygame.image.load('fuoco.png').convert_alpha(), (32, 32))
-vita_img       = pygame.transform.scale(pygame.image.load('vita.png').convert_alpha(), (32, 32))
+# ─── Caricamento immagini ────────────────────────────────────────────────────
+sfondo_img     = pygame.transform.scale(pygame.image.load('sfondo2.png').convert(), (LARGHEZZA, ALTEZZA))
+navicella_img  = pygame.transform.scale(pygame.image.load('navicella.png').convert_alpha(), (276, 228))
+planet_img     = pygame.transform.scale(pygame.image.load('atterraggio2.png').convert_alpha(), (1980, 1080))
+fuoco_img      = pygame.transform.scale(pygame.image.load('fuoco.png').convert_alpha(), (72, 72))
+vita_img       = pygame.transform.scale(pygame.image.load('vita.png').convert_alpha(), (72, 72))
 
-# ─── Suoni ───
+# ─── Suoni ───────────────────────────────────────────────────────────────────
 suono_atterraggio = pygame.mixer.Sound('atterraggio.mp3')
 suono_esplosione  = pygame.mixer.Sound('esplosione.mp3')
 pygame.mixer.music.load('musica.mp3')
 pygame.mixer.music.set_volume(0.4)
 pygame.mixer.music.play(-1)
 
-# ─── FPS ───
+# ─── FPS ─────────────────────────────────────────────────────────────────────
 clock = pygame.time.Clock()
 FPS = 60
 
-# ─── Parametri gioco ───
+# ─── Parametri gioco ─────────────────────────────────────────────────────────
 livello         = 1
 carburante_max  = 50
 gravità_base    = 0.3
 spinta          = -0.6
 vel_sicura      = 2.2
 vite_massime    = 3
+landing_offset  = 200 # Altezza sopra il bordo del pianeta per considerare l'atterraggio
 
-# ─── Stato dinamico ───
+# ─── Stato dinamico ──────────────────────────────────────────────────────────
 carburante     = carburante_max
 altezza        = 100
 velocità       = 0
@@ -61,7 +62,7 @@ punteggio      = 0
 vite_rimaste   = vite_massime
 game_over      = False
 
-# ─── Funzioni ───
+# ─── Funzioni ────────────────────────────────────────────────────────────────
 def mostra_testo(t, x, y, c=BIANCO):
     s = font.render(t, True, c)
     finestra.blit(s, (x, y))
@@ -79,7 +80,7 @@ def start_level():
     global carburante, altezza, velocità, gravità
     global in_discesa, atterrata, esplosa, pronto_next, tempo_inizio, game_over
 
-    carburante   = (carburante_max - (1 * livello))
+    carburante   = max(0, carburante_max - (1 * livello))
     altezza      = 100
     velocità     = 0
     gravità      = max(0.00, gravità_base - (livello - 1) * 0.02)
@@ -92,7 +93,7 @@ def start_level():
 
 start_level()
 
-# ─── Main loop ───
+# ─── Main loop ───────────────────────────────────────────────────────────────
 while True:
     for e in pygame.event.get():
         if e.type == pygame.QUIT:
@@ -115,7 +116,7 @@ while True:
                 start_level()
 
             if e.key == pygame.K_v and in_discesa and not (atterrata or esplosa):
-                altezza = ALTEZZA - planet_img.get_height() - 60
+                altezza = ALTEZZA - planet_img.get_height() - navicella_img.get_height()
                 velocità = 0
                 tempo_fine = time.time()
                 atterrata = True
@@ -125,6 +126,7 @@ while True:
                 suono_atterraggio.play()
                 pronto_next = True
 
+    # ─── Fisica ───────────────────────────────────────────────────────────────
     if in_discesa and not (atterrata or esplosa):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_SPACE] and carburante > 0:
@@ -134,10 +136,18 @@ while True:
         velocità += gravità
         altezza += velocità
 
-        if altezza + navicella_img.get_height() >= ALTEZZA - planet_img.get_height():
-            altezza = ALTEZZA - planet_img.get_height() - navicella_img.get_height()
-            tempo_fine = time.time()
+        # Hitbox personalizzata con Rect
+        nx = LARGHEZZA // 2 - navicella_img.get_width() // 2
+        ny = int(altezza)
+        nav_rect = pygame.Rect(nx + 10, ny + 10, navicella_img.get_width() - 20, navicella_img.get_height() - 20)
+        planet_rect = planet_img.get_rect(midbottom=(LARGHEZZA // 2, ALTEZZA))
+        # Soglia di collisione variabile
+        landing_line = planet_rect.bottom - landing_offset
 
+        if nav_rect.bottom >= landing_line:
+            # Allineo navicella alla soglia di atterraggio
+            altezza = landing_line - navicella_img.get_height()
+            tempo_fine = time.time()
             if abs(velocità) <= vel_sicura:
                 atterrata = True
                 c_rimasto = carburante
@@ -152,6 +162,7 @@ while True:
                 if vite_rimaste <= 0:
                     game_over = True
 
+    # ─── Disegno ──────────────────────────────────────────────────────────────
     finestra.blit(sfondo_img, (0, 0))
 
     planet_rect = planet_img.get_rect(midbottom=(LARGHEZZA // 2, ALTEZZA))
@@ -166,6 +177,7 @@ while True:
         fy = ny + navicella_img.get_height() - 8
         finestra.blit(fuoco_img, (fx, fy))
 
+    # HUD
     mostra_testo(f"Livello: {livello}", 20, 20)
     mostra_testo(f"Velocità: {velocità:.2f}", 20, 60)
     mostra_testo(f"Carburante: {int(carburante)}", 20, 90)
@@ -177,7 +189,7 @@ while True:
         pygame.draw.rect(finestra, VERDE, (20, 160, w, 20), border_radius=5)
 
     for i in range(vite_rimaste):
-        x = LARGHEZZA - (i + 1) * 40 - 10
+        x = LARGHEZZA - (i + 1) * 80 - 20
         finestra.blit(vita_img, (x, 20))
 
     if atterrata:
