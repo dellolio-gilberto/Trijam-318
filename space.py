@@ -214,7 +214,7 @@ while True:
     hud_x = 20
     hud_y = 20
     hud_w = 320
-    hud_h = 230
+    hud_h = 100
 
     hud_surface = pygame.Surface((hud_w, hud_h), pygame.SRCALPHA)
     hud_surface.fill((0, 0, 0, 160))
@@ -224,10 +224,7 @@ while True:
     spazio = 36
     mostra_testo("STATUS PANEL", hud_x + 20, hud_y + linea); linea += spazio
     mostra_testo(f"Level: {livello}", hud_x + 20, hud_y + linea); linea += spazio
-    mostra_testo(f"Speed: {velocità:.2f}", hud_x + 20, hud_y + linea); linea += spazio
-    mostra_testo(f"Gravity: {gravità:.2f}", hud_x + 20, hud_y + linea); linea += spazio
-    mostra_testo(f"Lives: {vite_rimaste}", hud_x + 20, hud_y + linea); linea += spazio
-
+        
     # Mostra la scritta "Fuel" e la percentuale sopra la barra
     fuel_percent = int((carburante / carburante_max) * 100)
     mostra_testo(f"Fuel: {fuel_percent}%", hud_x + 20, hud_y + linea); linea += spazio
@@ -238,11 +235,11 @@ while True:
     barra_x = hud_x + 20
     barra_y = hud_y + linea
 
-    pygame.draw.rect(finestra, GRIGIO, (barra_x, barra_y, barra_larghezza, barra_altezza), border_radius=10)
+    #pygame.draw.rect(finestra, GRIGIO, (barra_x, barra_y, barra_larghezza, barra_altezza), border_radius=10)
 
-    if carburante_max > 0:
-        riempimento = int(barra_larghezza * (carburante / carburante_max))
-        pygame.draw.rect(finestra, VERDE, (barra_x, barra_y, riempimento, barra_altezza), border_radius=10)
+    #if carburante_max > 0:
+    #    riempimento = int(barra_larghezza * (carburante / carburante_max))
+    #    pygame.draw.rect(finestra, VERDE, (barra_x, barra_y, riempimento, barra_altezza), border_radius=10)
 
     if atterrata:
         mostra_testo_centrato("Successful landing!", 300, VERDE)
