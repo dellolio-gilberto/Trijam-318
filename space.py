@@ -210,7 +210,7 @@ while True:
             ey = int(altezza + navicella_img.get_height() // 2 - img.get_height() // 2)
             finestra.blit(img, (ex, ey))
 
-    # ─── HUD Improved (EN) ────────────────────────────────────────────────────────
+    # HUD
     hud_x = 20
     hud_y = 20
     hud_w = 320
@@ -225,14 +225,18 @@ while True:
     mostra_testo("STATUS PANEL", hud_x + 20, hud_y + linea); linea += spazio
     mostra_testo(f"Level: {livello}", hud_x + 20, hud_y + linea); linea += spazio
     mostra_testo(f"Speed: {velocità:.2f}", hud_x + 20, hud_y + linea); linea += spazio
-    mostra_testo(f"Fuel: {int(carburante)}", hud_x + 20, hud_y + linea); linea += spazio
     mostra_testo(f"Gravity: {gravità:.2f}", hud_x + 20, hud_y + linea); linea += spazio
     mostra_testo(f"Lives: {vite_rimaste}", hud_x + 20, hud_y + linea); linea += spazio
 
+    # Mostra la scritta "Fuel" e la percentuale sopra la barra
+    fuel_percent = int((carburante / carburante_max) * 100)
+    mostra_testo(f"Fuel: {fuel_percent}%", hud_x + 20, hud_y + linea); linea += spazio
+
+    # Barra carburante
     barra_larghezza = 280
     barra_altezza = 20
     barra_x = hud_x + 20
-    barra_y = hud_y + hud_h + 10
+    barra_y = hud_y + linea
 
     pygame.draw.rect(finestra, GRIGIO, (barra_x, barra_y, barra_larghezza, barra_altezza), border_radius=10)
 
@@ -240,18 +244,12 @@ while True:
         riempimento = int(barra_larghezza * (carburante / carburante_max))
         pygame.draw.rect(finestra, VERDE, (barra_x, barra_y, riempimento, barra_altezza), border_radius=10)
 
-        fuel_percent = int((carburante / carburante_max) * 100)
-        fuel_surface = font.render(f"Fuel: {fuel_percent}%", True, BIANCO)
-        finestra.blit(fuel_surface, (barra_x + barra_larghezza + 15, barra_y - 4))
-
-    # ─── Game State Messages (EN) ─────────────────────────────────────────────────
     if atterrata:
         mostra_testo_centrato("Successful landing!", 300, VERDE)
         mostra_testo_centrato(f"Score: {punteggio}", 350, VERDE)
-        mostra_testo_centrato("Press ENTER to proceed to the next level", 420, VERDE)
+        mostra_testo_centrato("▶ Press ENTER to proceed to the next level", 420, VERDE)
 
     elif esplosa:
-        # dopo l'animazione esplosione non mostrata navicella
         mostra_testo_centrato("The ship exploded!", 300, ROSSO)
         mostra_testo_centrato("Press R to retry this level", 350, ROSSO)
         if game_over:
@@ -263,3 +261,4 @@ while True:
 
     pygame.display.flip()
     clock.tick(FPS)
+
