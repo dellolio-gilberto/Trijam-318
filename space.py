@@ -58,6 +58,7 @@ spinta          = -0.6
 vel_sicura      = 2.2
 vite_massime    = 3
 landing_offset  = 220
+limite_altezza  = -350  # Limite di altezza per quando la navicella si perde
 
 # ─── Stato dinamico ──────────────────────────────────────────────────────────
 carburante       = carburante_max
@@ -108,6 +109,8 @@ def start_level():
     esplosione_frame = 0
     esplosione_timer = 0
 
+    pygame.mixer.music.play(-1)  # Riprende la musica quando si riavvia il livello
+
 start_level()
 
 # ─── Main loop ───────────────────────────────────────────────────────────────
@@ -132,16 +135,16 @@ while True:
                 livello += 1
                 start_level()
 
-            if e.key == pygame.K_v and in_discesa and not (atterrata or esplosa):
-                altezza = ALTEZZA - planet_img.get_height() - navicella_img.get_height()
-                velocità = 0
-                tempo_fine = time.time()
-                atterrata = True
-                c_rimasto = carburante
-                t_discesa = tempo_fine - tempo_inizio
-                punteggio = calcola_punteggio(carburante_max, c_rimasto, t_discesa)
-                suono_atterraggio.play()
-                pronto_next = True
+            #if e.key == pygame.K_v and in_discesa and not (atterrata or esplosa):
+            #    altezza = ALTEZZA - planet_img.get_height() - navicella_img.get_height()
+            #    velocità = 0
+            #    tempo_fine = time.time()
+            #    atterrata = True
+            #    c_rimasto = carburante
+            #    t_discesa = tempo_fine - tempo_inizio
+            #    punteggio = calcola_punteggio(carburante_max, c_rimasto, t_discesa)
+            #    suono_atterraggio.play()
+            #    pronto_next = True
 
     # ─── Fisica ───────────────────────────────────────────────────────────────
     if in_discesa and not (atterrata or esplosa):
@@ -152,6 +155,14 @@ while True:
 
         velocità += gravità
         altezza += velocità
+
+        if altezza <= limite_altezza:  # La navicella si perde se sale troppo in alto
+            esplosa = True
+            vite_rimaste -= 1
+            suono_esplosione.play()
+            if vite_rimaste <= 0:
+                game_over = True
+                pygame.mixer.music.stop()  # Ferma la musica quando la navicella esplode
 
         nx = LARGHEZZA // 2 - navicella_img.get_width() // 2
         ny = int(altezza)
@@ -175,6 +186,7 @@ while True:
                 suono_esplosione.play()
                 if vite_rimaste <= 0:
                     game_over = True
+                    pygame.mixer.music.stop()  # Ferma la musica quando la navicella esplode
 
     # aggiorna sprite navicella
     if vite_rimaste > 0:
@@ -235,9 +247,9 @@ while True:
     barra_x = hud_x + 20
     barra_y = hud_y + linea
 
-    #pygame.draw.rect(finestra, GRIGIO, (barra_x, barra_y, barra_larghezza, barra_altezza), border_radius=10)
+    # pygame.draw.rect(finestra, GRIGIO, (barra_x, barra_y, barra_larghezza, barra_altezza), border_radius=10)
 
-    #if carburante_max > 0:
+    # if carburante_max > 0:
     #    riempimento = int(barra_larghezza * (carburante / carburante_max))
     #    pygame.draw.rect(finestra, VERDE, (barra_x, barra_y, riempimento, barra_altezza), border_radius=10)
 
