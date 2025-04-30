@@ -1,5 +1,3 @@
----
-
 # 🚀 Low on Power
 
 _A minimalistic precision lander made in 2h 58m for [Trijam #318](https://trijam.net/)_
